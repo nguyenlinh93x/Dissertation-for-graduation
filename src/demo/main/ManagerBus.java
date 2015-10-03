@@ -13,7 +13,7 @@ public class ManagerBus implements Comparator<Bus> {
 	private List<Bus> listFindBus; // List of bus was found with id which we
 									// inputed
 	private List<Result> listOfResult; // List of bus find speed
-	private ManageFile mnFile;
+	private ManagerFile mnFile;
 
 	public ManagerBus(List<Bus> listOfBus) {
 		this.listOfBus = listOfBus;
@@ -104,7 +104,7 @@ public class ManagerBus implements Comparator<Bus> {
 			this.listOfResult.add(new Result(this.listFindBus.get(0).getId(),
 					this.listFindBus.get(0).getLat(), this.listFindBus.get(0)
 							.getLongt(), 0, date0, 0));
-			
+
 			// Find and Add next line of bus
 			for (int i = 1; i < this.listFindBus.size(); i++) {
 				double r = 6378137; // Radian of earth
@@ -141,14 +141,6 @@ public class ManagerBus implements Comparator<Bus> {
 		return listOfResult;
 	}
 
-
-	private double radToDeg(double dist) {
-		return (dist * 180 / Math.PI);
-	}
-
-	private double degToRad(double value) {
-		return (value * Math.PI / 180.0);
-	}
 
 	// Show arrayList
 	@Override

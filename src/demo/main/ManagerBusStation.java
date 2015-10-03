@@ -6,9 +6,6 @@ import java.util.List;
 public class ManagerBusStation {
 	private List<BusStation> listOfStation;
 	
-	public ManagerBusStation(List<BusStation> list) {
-		this.listOfStation = list;
-	}
 	
 	public ManagerBusStation() {
 		this.listOfStation = new ArrayList<BusStation>();

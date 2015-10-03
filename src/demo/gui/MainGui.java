@@ -90,13 +90,18 @@ import org.openstreetmap.gui.jmapviewer.tilesources.MapQuestOpenAerialTileSource
 import org.openstreetmap.gui.jmapviewer.tilesources.MapQuestOsmTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource;
 
+import com.timeseries.TimeSeries;
+
 import demo.main.Bus;
 import demo.main.BusStation;
 import demo.main.DataChart;
-import demo.main.ManageFile;
+import demo.main.ManagerFile;
 import demo.main.ManagerBus;
 import demo.main.ManagerTravelBusStation;
 import demo.main.Result;
+import demo.main.Similar;
+import demo.main.SimilarComp;
+
 import javax.swing.ScrollPaneConstants;
 
 public class MainGui extends JFrame {
@@ -110,7 +115,7 @@ public class MainGui extends JFrame {
 	private JTextField txt1;
 	private JButton btnReadFile;
 	private JTable table;
-	private ManageFile mnf;
+	private ManagerFile mnf;
 	private JLabel lbl1;
 	private ManagerBus mnBus;
 	private JButton btnStationBus;
@@ -180,6 +185,7 @@ public class MainGui extends JFrame {
 	private JComboBox cbChangeChart;
 	private String typeChart;
 	private JLabel lblNewLabel_4;
+	private List<Similar> listOfSimilar;
 
 	/**
 	 * Launch the application.
@@ -261,12 +267,13 @@ public class MainGui extends JFrame {
 		treeMap = new JMapViewerTree("Zones");
 		viewer.setBounds(10, 5, 507, 511);
 
+		listOfSimilar = new ArrayList<Similar>();
 		listOfStation = new ArrayList<BusStation>();
 		cbChart = new ArrayList<JCheckBox>();
 
 		director = null;
 		directorStation = null;
-		mnf = new ManageFile();
+		mnf = new ManagerFile();
 		listOfResult = new ArrayList<Result>();
 		frmBusApplication.getContentPane().setLayout(null);
 
@@ -341,7 +348,7 @@ public class MainGui extends JFrame {
 		panel_1.setLayout(null);
 
 		lblNewLabel_4 = new JLabel(
-				"Red: Bus station || Green: First point || Green: Last point");
+				"Red: Bus station || Green: First point || Orange: Last point");
 		lblNewLabel_4.setBounds(10, 0, 487, 27);
 		panel_1.add(lblNewLabel_4);
 
@@ -352,7 +359,7 @@ public class MainGui extends JFrame {
 						TitledBorder.CENTER, TitledBorder.TOP, null, new Color(
 								0, 0, 0)));
 		panelMapTest1.setBackground(SystemColor.controlHighlight);
-		panelMapTest1.setBounds(10, 485, 779, 122);
+		panelMapTest1.setBounds(10, 485, 779, 134);
 		panelTabChart.add(panelMapTest1);
 		panelMapTest1.setLayout(null);
 
@@ -360,7 +367,7 @@ public class MainGui extends JFrame {
 		panel_10.setBorder(new TitledBorder(null, "MAP", TitledBorder.CENTER,
 				TitledBorder.TOP, null, null));
 		panel_10.setBackground(SystemColor.activeCaption);
-		panel_10.setBounds(424, 11, 319, 100);
+		panel_10.setBounds(424, 11, 319, 112);
 		panelMapTest1.add(panel_10);
 		panel_10.setLayout(null);
 
@@ -396,18 +403,43 @@ public class MainGui extends JFrame {
 
 		JPanel panel_11 = new JPanel();
 		panel_11.setBorder(new TitledBorder(UIManager
-				.getBorder("TitledBorder.border"), "Other function",
+				.getBorder("TitledBorder.border"), "Fast Dtw",
 				TitledBorder.CENTER, TitledBorder.TOP, null, new Color(0, 0, 0)));
 		panel_11.setBackground(SystemColor.activeCaption);
-		panel_11.setBounds(79, 11, 260, 100);
+		panel_11.setBounds(20, 11, 344, 112);
 		panelMapTest1.add(panel_11);
 		panel_11.setLayout(null);
 
-		JLabel lblComingSoon = new JLabel("Coming soon!");
-		lblComingSoon.setFont(new Font("Tempus Sans ITC", Font.BOLD
-				| Font.ITALIC, 13));
-		lblComingSoon.setBounds(80, 41, 103, 14);
-		panel_11.add(lblComingSoon);
+		JTabbedPane tabbedPane_1 = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane_1.setBounds(10, 11, 324, 90);
+		panel_11.add(tabbedPane_1);
+
+		JPanel panelCalDtw = new JPanel();
+		tabbedPane_1.addTab("DTW", null, panelCalDtw, null);
+		panelCalDtw.setLayout(null);
+
+		JLabel lblCalculate = new JLabel("Calculate:");
+		lblCalculate.setBounds(10, 15, 62, 14);
+		panelCalDtw.add(lblCalculate);
+
+		JLabel lblExport = new JLabel("Export:");
+		lblExport.setBounds(10, 37, 62, 14);
+		panelCalDtw.add(lblExport);
+
+		
+
+		JPanel panelShowDtw = new JPanel();
+		tabbedPane_1.addTab("Result", null, panelShowDtw, null);
+		panelShowDtw.setLayout(null);
+
+		JScrollPane scrollPane_3 = new JScrollPane();
+		scrollPane_3.setBounds(0, 0, 319, 62);
+		panelShowDtw.add(scrollPane_3);
+
+		final JLabel lblShowSimilar = new JLabel("New label");
+		lblShowSimilar.setForeground(Color.RED);
+		lblShowSimilar.setFont(new Font("MV Boli", Font.BOLD, 13));
+		scrollPane_3.setViewportView(lblShowSimilar);
 		cbTileSource.addItem(new OsmTileSource.Mapnik());
 		cbTileSource.addItem(new OsmTileSource.CycleMap());
 		cbTileSource.addItem(new MapQuestOsmTileSource());
@@ -598,61 +630,6 @@ public class MainGui extends JFrame {
 		scrollPane_1.setViewportView(lbInfo);
 		lbInfo.setBackground(new Color(153, 204, 204));
 		lbInfo.setFont(new Font("Trebuchet MS", Font.BOLD, 14));
-
-		final JButton btnNewButton_2 = new JButton("Choose");
-		btnNewButton_2.setBounds(302, 31, 91, 23);
-		/*
-		 * Read folder and draw chart
-		 */
-		btnNewButton_2.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				int result;
-
-				chooseFolder = new JFileChooser();
-				chooseFolder.setDialogTitle("Choose a folder");
-				chooseFolder
-						.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-				chooseFolder.setApproveButtonText("Select");
-				// Disable file option
-				chooseFolder.setAcceptAllFileFilterUsed(false);
-				result = chooseFolder.showOpenDialog(btnNewButton_2);
-				if (result == JFileChooser.APPROVE_OPTION) {
-					lbIcon.show();
-
-					txtFolder1.setText(chooseFolder.getSelectedFile()
-							.toString());
-					// Call function read folder
-					try {
-						String showIdInfo = " Id will be showed on chart contains: ";
-						dtChart = mnf.readMultiFile(chooseFolder
-								.getSelectedFile().toString());
-						String[] name = dtChart.getNameChart();
-						for (int i = 0; i < name.length; i++) {
-							if (i == name.length - 1) {
-								showIdInfo += name[i]
-										+ ".Click show button to start view!";
-							} else {
-								showIdInfo += name[i] + ", ";
-							}
-
-						}
-						lbInfo.setText(showIdInfo);
-
-						JOptionPane.showMessageDialog(new JFrame(), "Success");
-						// Get items that were selected
-
-					} catch (IOException | ParseException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-				} else {
-					System.out.println("No select");
-				}
-			}
-
-		});
-		panel_5.add(btnNewButton_2);
 
 		final JButton btnShow = new JButton("Show");
 		btnShow.setBounds(51, 62, 123, 23);
@@ -1001,7 +978,7 @@ public class MainGui extends JFrame {
 					lblFinish.setText(" ");
 
 					// Begin write result file
-					ManageFile mnFileBus = new ManageFile();
+					ManagerFile mnFileBus = new ManagerFile();
 					List<Result> listOfResult = null;
 
 					// Calculate speed follow distance/time
@@ -1198,13 +1175,39 @@ public class MainGui extends JFrame {
 		toolBar.add(btnNewButton);
 
 		JButton btnPreMenu = new JButton();
+		btnPreMenu.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				int index = tabbedPane.getSelectedIndex();
+				System.out.println(tabbedPane.getTabCount());
+				if (index == 0) {
+					tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
+				} else {
+					index--;
+					tabbedPane.setSelectedIndex(index);
+
+				}
+			}
+		});
 		btnPreMenu.setToolTipText("Previous tab");
 		Image imagePreMenu = new ImageIcon(this.getClass().getResource(
 				"/previous-menu.png")).getImage();
 		btnPreMenu.setIcon(new ImageIcon(imagePreMenu));
 		toolBar.add(btnPreMenu);
-
+		tabbedPane.setEnabledAt(2, false);
 		JButton btnNextMenu = new JButton();
+		btnNextMenu.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				int index = tabbedPane.getSelectedIndex();
+				System.out.println(tabbedPane.getTabCount());
+				if (index == tabbedPane.getTabCount() - 1) {
+					tabbedPane.setSelectedIndex(0);
+				} else {
+					index++;
+					tabbedPane.setSelectedIndex(index);
+
+				}
+			}
+		});
 		btnNextMenu.setToolTipText("Next tab");
 		Image imageNextMenu = new ImageIcon(this.getClass().getResource(
 				"/next-menu.png")).getImage();
@@ -1234,6 +1237,7 @@ public class MainGui extends JFrame {
 					btnAddData.setEnabled(true);
 					progressBar.setValue(50);
 					File[] files = jfile.getSelectedFiles();
+					System.out.println(files);
 					for (int i = 0; i < files.length; i++) {
 						if (i == files.length - 1) {
 							temp += files[i].getAbsoluteFile().getName();
@@ -1371,6 +1375,7 @@ public class MainGui extends JFrame {
 		mnHelp.setForeground(Color.WHITE);
 		mnHelp.setFont(new Font("Segoe UI", Font.BOLD, 12));
 		menuBar.add(mnHelp);
+		btnShow.setEnabled(false);
 
 		btnShow.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -1410,6 +1415,7 @@ public class MainGui extends JFrame {
 				countChart++;
 				JOptionPane.showMessageDialog(new JFrame(),
 						"Your chart is showed on tab Evaluate data");
+				tabbedPane.setEnabledAt(2, true);
 				tabbedPane.setSelectedIndex(2);
 			}
 
@@ -1629,5 +1635,138 @@ public class MainGui extends JFrame {
 
 		});
 
+		final JButton btnNewButton_2 = new JButton("Choose");
+		btnNewButton_2.setBounds(302, 31, 91, 23);
+		/*
+		 * Read folder and draw chart
+		 */
+		btnNewButton_2.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				int result;
+
+				btnShow.setEnabled(false);
+				chooseFolder = new JFileChooser();
+				chooseFolder.setDialogTitle("Choose a folder");
+				chooseFolder
+						.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				chooseFolder.setApproveButtonText("Select");
+				// Disable file option
+				chooseFolder.setAcceptAllFileFilterUsed(false);
+				result = chooseFolder.showOpenDialog(btnNewButton_2);
+				if (result == JFileChooser.APPROVE_OPTION) {
+					lbIcon.show();
+
+					txtFolder1.setText(chooseFolder.getSelectedFile()
+							.toString());
+					// Call function read folder
+					try {
+						String showIdInfo = " Id will be showed on chart contains: ";
+						dtChart = mnf.readMultiFile(chooseFolder
+								.getSelectedFile().toString());
+						String[] name = dtChart.getNameChart();
+						for (int i = 0; i < name.length; i++) {
+							if (i == name.length - 1) {
+								showIdInfo += name[i]
+										+ ".Click show button to start view!";
+							} else {
+								showIdInfo += name[i] + ", ";
+							}
+
+						}
+						lbInfo.setText(showIdInfo);
+
+						JOptionPane.showMessageDialog(new JFrame(), "Success");
+						btnShow.setEnabled(true);
+						// Get items that were selected
+
+					} catch (IOException | ParseException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+				} else {
+					System.out.println("No select");
+				}
+			}
+
+		});
+		panel_5.add(btnNewButton_2);
+
+		JButton btnNewButton_1 = new JButton("Start");
+		/*
+		 * This function use to calculate similarity speed We'll calculate 2
+		 * data and repeat with next data
+		 */
+		btnNewButton_1.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				lblShowSimilar.setText("");
+				double min = 0;
+				min = mnf.getListOfSimilar().indexOf(
+						Collections.min(mnf.getListOfSimilar(),
+								new SimilarComp()));
+				min = findMinSimilar(mnf.getListOfSimilar());
+				System.out.println(min);
+				for (Similar sml : mnf.getListOfSimilar()) {
+					if(min == sml.getWarpDistance()) {
+						System.out.println(sml.getName());
+						lblShowSimilar.setText(" =>" + sml.getName() + " = " + sml.getWarpDistance() + " is nearly similar");
+						break;
+					}
+				}
+			}
+
+			private double findMinSimilar(List<Similar> listOfSimilar) {
+				double min = -1;
+				for (Similar sml : mnf.getListOfSimilar()) {
+					if (min == -1) {
+						min = sml.getWarpDistance();
+					} else {
+						if (min > sml.getWarpDistance()) {
+							min = sml.getWarpDistance();
+						}
+					}
+				}
+				return min;
+			}
+
+		});
+		btnNewButton_1.setBounds(78, 11, 231, 20);
+		panelCalDtw.add(btnNewButton_1);
+		
+		JButton btnSaveAs = new JButton("Save as");
+		/*
+		 * That function use to export file time series of speed to csv file
+		 */
+		btnSaveAs.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				JFileChooser saveSml = new JFileChooser();
+				saveSml.setDialogTitle("Save file to my computer");
+
+				FileNameExtensionFilter filter = new FileNameExtensionFilter(
+						".csv", "csv");
+				saveSml.setFileFilter(filter);
+
+				int userSelection = saveSml.showSaveDialog(btnWriteFileTo);
+				// If Open was clicked
+				if (userSelection == JFileChooser.APPROVE_OPTION) {
+					// Get path of file
+					File fileToSave = saveSml.getSelectedFile();
+					if (!saveSml.getSelectedFile().getAbsolutePath()
+							.endsWith(".csv")) {
+						fileToSave = new File(saveSml.getSelectedFile()
+								+ ".csv");
+					}
+					director = fileToSave.getAbsolutePath();
+
+					// Write file
+					mnf.writeCsvFile(director, "similar");
+					System.out.println(mnf.getListOfSimilar());
+					// Test
+				}
+			}
+		});
+		btnSaveAs.setBounds(78, 33, 231, 18);
+		panelCalDtw.add(btnSaveAs);
 	}
+
 }

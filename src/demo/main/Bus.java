@@ -12,9 +12,7 @@ public class Bus  {
 	private double lock;
 	private long dateTime;
 
-	public Bus() {
-		super();
-	}
+	public Bus() {}
 
 	public Bus(int id, double lat, double longt, double speed,
 			double satellite, double lock, long dateTime) {
